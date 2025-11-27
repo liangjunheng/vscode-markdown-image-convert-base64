@@ -2,7 +2,7 @@
 	"name": "markdown-image-convert-base64",
 	"private": true,
 	"displayName": "Markdown Image to Base64",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"publisher": "liangjunheng",
 	"icon": "icon.png",
 	"description": "This is a markdown ext that replace base64 code by `![][image-id]` and append base64 code to the text's last line.",
