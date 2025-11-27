@@ -5,6 +5,7 @@
 import * as vscode from 'vscode';
 import { getMarkdownImageFromLine } from './checkImageLine';
 import { imageToBase64 } from './ImageToBase64Converter';
+import * as config_manager from './config_manager';
 
 /**
  * Provides code actions for converting base64 code to ![][image-id] and append base64 code to text's last line.
@@ -36,7 +37,7 @@ export class MDBase64er implements vscode.CodeActionProvider {
 			return undefined;
 		}
 
-		const base64 = await imageToBase64(localImage?.url, 600)
+		const base64 = await imageToBase64(localImage?.url, config_manager.getModifyImageWidth())
 		if (base64 === undefined) {
 			return undefined;
 		}

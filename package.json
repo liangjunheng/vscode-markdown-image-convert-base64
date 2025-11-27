@@ -2,7 +2,7 @@
 	"name": "markdown-image-convert-base64",
 	"private": true,
 	"displayName": "Markdown Image to Base64",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"publisher": "liangjunheng",
 	"icon": "icon.png",
 	"description": "This is a markdown ext that replace base64 code by `![][image-id]` and append base64 code to the text's last line.",
@@ -21,6 +21,20 @@
 	],
 	"browser": "./dist/web/extension.js",
 	"main": "./dist/web/extension.js",
+	"contributes": {
+		"configuration": {
+			"title": "Markdown Image to Base64",
+			"properties": {
+				"markdown-image-convert-base64.modifyImageWidth": {
+					"type": "integer",
+					"default": 0,
+					"minimum": 0,
+					"scope": "application",
+					"description": "to modify image width. defaults: original image width"
+				}
+			}
+		}
+	},
 	"scripts": {
 		"install": "npm install ",
 		"test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=.",

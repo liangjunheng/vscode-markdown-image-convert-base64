@@ -114,15 +114,20 @@ function getWebviewHtml(dataUrl: string, targetWidth: number, mime: string): str
         img.src = dataUrl;
         await img.decode(); // 确保图片加载完成
 
-        const scale = targetWidth / img.width;
-        const newHeight = img.height * scale;
-
         const canvas = document.createElement('canvas');
-        canvas.width = targetWidth;
-        canvas.height = newHeight;
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        if(targetWidth > 0) {
+          const scale = targetWidth / img.width;
+          const newHeight = img.height * scale;
+          
+          canvas.width = targetWidth;
+          canvas.height = newHeight;
+        }
 
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, targetWidth, newHeight);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
         // 这里直接返回 dataURL，即 base64 字符串[[12](https://blog.csdn.net/cczhumin/article/details/50990329)][[14](https://www.jb51.net/javascript/3023762jc.htm)]
         return canvas.toDataURL(mime, mime === 'image/jpeg' ? 0.8 : undefined);
