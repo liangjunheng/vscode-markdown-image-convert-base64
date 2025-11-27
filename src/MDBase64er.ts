@@ -16,17 +16,29 @@ export class MDBase64er implements vscode.CodeActionProvider {
 	];
 
 	public async provideCodeActions(document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction[] | undefined> {
+		const imageAddrToBase64CodeAction = await this.imageAddrToBase64(document, range);
+		const codeActions: vscode.CodeAction[] = [];
+		if (imageAddrToBase64CodeAction) {
+			codeActions.unshift(imageAddrToBase64CodeAction);
+		}
+		return codeActions;
+	}
+
+	async imageAddrToBase64(document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction | undefined> {
 		const start = range.start;
-		const content = document.lineAt(start.line).text;
-		const localImage = getMarkdownImageFromLine(content);
-		console.log(`localImage, content: ${content} --> (${localImage?.alt}, ${localImage?.url})`)
-		if(localImage?.url === undefined) {
-			return
+		const lineContent = document.lineAt(start.line).text;
+		if (lineContent === undefined || lineContent === '') {
+			return undefined;
+		}
+		const localImage = getMarkdownImageFromLine(lineContent);
+		console.log(`localImage, content: ${lineContent} --> (${localImage?.alt}, ${localImage?.url})`)
+		if (localImage?.url === undefined) {
+			return undefined;
 		}
 
 		const base64 = await imageToBase64(localImage?.url, 600)
-		if(base64 === undefined) {
-			return
+		if (base64 === undefined) {
+			return undefined;
 		}
 
 		const fix = new vscode.CodeAction(`Replace IMG ID`, vscode.CodeActionKind.QuickFix);
@@ -38,9 +50,7 @@ export class MDBase64er implements vscode.CodeActionProvider {
 		const image_id = `![${localImage?.alt}](${base64})`;
 		fix.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), image_id);
 		fix.isPreferred = true;
-
-		return [fix,];
+		return fix;
 	}
-
 
 }
