@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import { CodeActionsProvider } from '../code_actions_provider';
 import { pasteLink } from '../utils/parse_link_utils';
+import { CodeLensProvider } from '../code_lens_provider';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -30,11 +31,14 @@ import { pasteLink } from '../utils/parse_link_utils';
 
 
 export function activate(context: vscode.ExtensionContext) {
-	context.subscriptions.push(
-		vscode.languages.registerCodeActionsProvider('markdown', new CodeActionsProvider(context), {
-			providedCodeActionKinds: CodeActionsProvider.providedCodeActionKinds
-		}));
 	context.subscriptions.push(vscode.commands.registerCommand('extension.pasteUrl', pasteLink));
+	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('markdown', new CodeActionsProvider(context), {
+		providedCodeActionKinds: CodeActionsProvider.providedCodeActionKinds
+	}));
+	context.subscriptions.push(vscode.languages.registerCodeLensProvider(
+		CodeLensProvider.selector,
+		new CodeLensProvider(context)
+	));
 }
 
 // this method is called when your extension is deactivated
