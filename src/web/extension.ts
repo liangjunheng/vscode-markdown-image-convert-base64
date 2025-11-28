@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { CodeActionsProvider } from '../code_actions_provider';
+import { pasteLink } from '../utils/parse_link_utils';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -33,7 +34,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.languages.registerCodeActionsProvider('markdown', new CodeActionsProvider(context), {
 			providedCodeActionKinds: CodeActionsProvider.providedCodeActionKinds
 		}));
+	context.subscriptions.push(vscode.commands.registerCommand('extension.pasteUrl', pasteLink));
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }
