@@ -47,6 +47,14 @@ export class CodeActionsProvider implements vscode.CodeActionProvider {
 		const lineContent = document.lineAt(start.line).text;
 		console.log(`provideCodeActions, content: ${lineContent}`)
 
+		const insertImageBlockTipsCodeAction = await this.insertImageBlockTipsCodeAction(document, range, lineContent)
+		if(insertImageBlockTipsCodeAction) {
+			codeActions.push(insertImageBlockTipsCodeAction)
+		}
+		const insertLinkBlockTipsCodeAction = await this.insertLinkBlockTipsCodeAction(document, range, lineContent)
+		if(insertLinkBlockTipsCodeAction) {
+			codeActions.push(insertLinkBlockTipsCodeAction)
+		}
 		const insertTableTipsCodeAction = await this.insertTableTipsCodeAction(document, range, lineContent)
 		if(insertTableTipsCodeAction) {
 			codeActions.push(insertTableTipsCodeAction)
@@ -74,17 +82,60 @@ export class CodeActionsProvider implements vscode.CodeActionProvider {
 		return codeActions;
 	}
 
+	async insertLinkBlockTipsCodeAction(document: vscode.TextDocument, range: vscode.Range, lineContent: string): Promise<vscode.CodeAction | undefined> {
+		if (lineContent.trim() !== '' && lineContent !== 'link') {
+			return undefined
+		}
+		const codeAction = new vscode.CodeAction(`Insert Link Block`, vscode.CodeActionKind.QuickFix);
+		codeAction.edit = new vscode.WorkspaceEdit();
+		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), '');
+		codeAction.command = {
+			title: '',
+			command: 'editor.action.insertSnippet',
+			arguments: [{
+				snippet: "[${1:title}](${2:https://example.com})",
+			}],
+		};
+		return codeAction;
+	}
+
+
+	async insertImageBlockTipsCodeAction(document: vscode.TextDocument, range: vscode.Range, lineContent: string): Promise<vscode.CodeAction | undefined> {
+		if (lineContent.trim() !== '' && lineContent !== 'image') {
+			return undefined
+		}
+		const codeAction = new vscode.CodeAction(`Insert Image Block`, vscode.CodeActionKind.QuickFix);
+		codeAction.edit = new vscode.WorkspaceEdit();
+		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), '');
+		codeAction.command = {
+			title: '',
+			command: 'editor.action.insertSnippet',
+			arguments: [{
+				snippet: "![${1:title}](${2:image.png})",
+			}],
+		};
+		return codeAction;
+	}
+
 	async insertTableTipsCodeAction(document: vscode.TextDocument, range: vscode.Range, lineContent: string): Promise<vscode.CodeAction | undefined> {
 		if(lineContent.trim() !== '' && lineContent !== 'table') {
 			return undefined
 		}
 		const codeAction = new vscode.CodeAction(`Insert Table`, vscode.CodeActionKind.QuickFix);
 		codeAction.edit = new vscode.WorkspaceEdit();
-		const tableHeader = "| Column1 | Column2 | Column3 |\n";
-		const tableSeparator = "| ------- | ------- | ------- |\n";
-		const tableContent = "| Item1   | Item1   | Item1   |";
-		const table = tableHeader + tableSeparator + tableContent;
-		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), table);
+		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), '');
+		codeAction.command = {
+			title: '',
+			command: 'editor.action.insertSnippet',
+			arguments: [{
+				snippet: [
+					"| ${1:Column1} | ${2:Column2} | ${3:Column3} |",
+					"| ------- | ------- | ------- |",
+					"| ${4:Item1}   | ${5:Item1}   | ${6:Item1}   |",
+					"${0}"
+				].join('\n'),
+			}],
+		};
 		return codeAction;
 	}
 
@@ -94,8 +145,14 @@ export class CodeActionsProvider implements vscode.CodeActionProvider {
 		}
 		const codeAction = new vscode.CodeAction(`Insert Task`, vscode.CodeActionKind.QuickFix);
 		codeAction.edit = new vscode.WorkspaceEdit();
-		const task = "- [ ] ";
-		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), task);
+		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), '');
+		codeAction.command = {
+		title: '',
+		command: 'editor.action.insertSnippet',
+		arguments: [{
+			snippet: "- [${1| ,x|}] ${2:text}",
+		}],
+		};
 		return codeAction
 	}
 
@@ -105,8 +162,14 @@ export class CodeActionsProvider implements vscode.CodeActionProvider {
 		}
 		const codeAction = new vscode.CodeAction(`Insert Mermaid`, vscode.CodeActionKind.QuickFix);
 		codeAction.edit = new vscode.WorkspaceEdit();
-		const content = "```mermaid\n\n```";
-		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), content);
+		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), '');
+		codeAction.command = {
+			title: '',
+			command: 'editor.action.insertSnippet',
+			arguments: [{
+				snippet: "```mermaid\n${1}\n```",
+			}],
+		};
 		return codeAction
 	}
 
