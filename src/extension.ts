@@ -3,11 +3,11 @@
  *--------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import { MDBase64er } from './MDBase64er';
+import { CodeActionsProvider } from './code_actions_provider';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
-		vscode.languages.registerCodeActionsProvider('markdown', new MDBase64er(), {
-			providedCodeActionKinds: MDBase64er.providedCodeActionKinds
+		vscode.languages.registerCodeActionsProvider('markdown', new CodeActionsProvider(context), {
+			providedCodeActionKinds: CodeActionsProvider.providedCodeActionKinds
 		}));
 }

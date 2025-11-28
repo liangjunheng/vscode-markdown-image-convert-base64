@@ -1,8 +1,8 @@
 {
-	"name": "markdown-image-convert-base64",
+	"name": "markdown-intellisense",
 	"private": true,
-	"displayName": "Markdown Image to Base64",
-	"version": "0.0.3",
+	"displayName": "Markdown Intellisense",
+	"version": "1.0.0",
 	"publisher": "liangjunheng",
 	"icon": "icon.png",
 	"description": "This is a markdown ext that replace base64 code by `![][image-id]` and append base64 code to the text's last line.",
@@ -23,14 +23,14 @@
 	"main": "./dist/web/extension.js",
 	"contributes": {
 		"configuration": {
-			"title": "Markdown Image to Base64",
+			"title": "Markdown Intellisense",
 			"properties": {
-				"markdown-image-convert-base64.modifyImageWidth": {
+				"markdown-intellisense.modifyImageWidth": {
 					"type": "integer",
 					"default": 0,
 					"minimum": 0,
 					"scope": "application",
-					"description": "to modify image width. defaults: original image width"
+					"description": "modify image width. defaults: original image width"
 				}
 			}
 		}
@@ -67,5 +67,10 @@
 	},
 	"dependencies": {
 		"path-browserify": "^1.0.1"
-	}
+	},
+	"recommendations": [
+		"bierner.markdown-mermaid",
+		"corschenzi.mermaid-graphical-editor",
+		"octop162.markdown-table-editor"
+	]
 }

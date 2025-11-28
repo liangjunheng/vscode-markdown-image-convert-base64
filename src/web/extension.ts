@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { MDBase64er } from '../MDBase64er';
+import { CodeActionsProvider } from '../code_actions_provider';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -30,8 +30,8 @@ import { MDBase64er } from '../MDBase64er';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
-		vscode.languages.registerCodeActionsProvider('markdown', new MDBase64er(), {
-			providedCodeActionKinds: MDBase64er.providedCodeActionKinds
+		vscode.languages.registerCodeActionsProvider('markdown', new CodeActionsProvider(context), {
+			providedCodeActionKinds: CodeActionsProvider.providedCodeActionKinds
 		}));
 }
 
