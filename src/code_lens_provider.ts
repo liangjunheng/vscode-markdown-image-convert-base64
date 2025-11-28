@@ -124,11 +124,16 @@ export class CodeLensProvider implements vscode.CodeLensProvider {
 			new vscode.Position(currentLine, 0),
 			new vscode.Position(currentLine, 0)
 		);
+		var snippet = "- [${1| ,x|}] ${2:text}"
+		const lineContent = document.lineAt(currentLine).text
+		if(lineContent.trim() !== '') {
+			snippet = `- [\${1| ,x|}] ${lineContent}`
+		}
 		const image: vscode.Command = {
 			title: 'Task List',
 			command: 'editor.action.insertSnippet',
 			arguments: [{
-				snippet: "- [${1| ,x|}] ${2:text}",
+				snippet: snippet,
 			}],
 		};
 		return new vscode.CodeLens(range, image);
