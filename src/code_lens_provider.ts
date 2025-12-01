@@ -206,39 +206,39 @@ export class CodeLensProvider implements vscode.CodeLensProvider {
 	}
 
 	async insertImageBlockCodeLens(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
-		const image: vscode.Command = {
+		const command: vscode.Command = {
 			title: ' ➕Image ',
 			command: 'extension.editor.insertImageBlock',
 			arguments: [],
 		};
-		return new vscode.CodeLens(currentLine.range, image);
+		return new vscode.CodeLens(currentLine.range, command);
 	}
 
 	async insertLinkBlockCodeLens(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
-		const image: vscode.Command = {
+		const command: vscode.Command = {
 			title: ' ➕Link ',
 			command: 'extension.editor.insertLinkBlock',
 			arguments: [],
 		};
-		return new vscode.CodeLens(currentLine.range, image);
+		return new vscode.CodeLens(currentLine.range, command);
 	}
 
 	async insertTableCodeLens(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
-		const image: vscode.Command = {
+		const command: vscode.Command = {
 			title: ' ➕Table ',
 			command: 'extension.editor.insertTableBlock',
 			arguments: [],
 		};
-		return new vscode.CodeLens(currentLine.range, image);
+		return new vscode.CodeLens(currentLine.range, command);
 	}
 
 	async insertMermaidBlockCodeLens(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
-		const image: vscode.Command = {
+		const command: vscode.Command = {
 			title: ' ➕Mermaid ',
 			command: 'extension.editor.insertMermaid',
 			arguments: [],
 		};
-		return new vscode.CodeLens(currentLine.range, image);
+		return new vscode.CodeLens(currentLine.range, command);
 	}
 
 	resolveCodeLens(

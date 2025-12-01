@@ -44,32 +44,69 @@ export class CodeActionsProvider implements vscode.CodeActionProvider {
 	public async provideCodeActions(document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction[] | undefined> {
 		const codeActions: vscode.CodeAction[] = [];
 		const start = range.start;
-		const lineContent = document.lineAt(start.line).text;
+		const lineContent = document.lineAt(start.line);
 		console.log(`provideCodeActions, content: ${lineContent}`)
 
-		const insertImageBlockTipsCodeAction = await this.insertImageBlockTipsCodeAction(document, range, lineContent)
-		if(insertImageBlockTipsCodeAction) {
-			codeActions.push(insertImageBlockTipsCodeAction)
+		const toggleHeadingUp = await this.toggleHeadingUp(document, lineContent)
+		if (toggleHeadingUp) {
+			codeActions.push(toggleHeadingUp)
 		}
-		const insertLinkBlockTipsCodeAction = await this.insertLinkBlockTipsCodeAction(document, range, lineContent)
-		if(insertLinkBlockTipsCodeAction) {
-			codeActions.push(insertLinkBlockTipsCodeAction)
+		const toggleHeadingDown = await this.toggleHeadingDown(document, lineContent)
+		if (toggleHeadingDown) {
+			codeActions.push(toggleHeadingDown)
 		}
-		const insertTableTipsCodeAction = await this.insertTableTipsCodeAction(document, range, lineContent)
-		if(insertTableTipsCodeAction) {
-			codeActions.push(insertTableTipsCodeAction)
+		const toggleBold = await this.toggleBold(document, lineContent)
+		if (toggleBold) {
+			codeActions.push(toggleBold)
 		}
-		const insertTaskTipsCodeAction = await this.insertTaskTipsCodeAction(document, range, lineContent)
-		if (insertTaskTipsCodeAction) {
-			codeActions.push(insertTaskTipsCodeAction)
+		const toggleItalic = await this.toggleItalic(document, lineContent)
+		if (toggleItalic) {
+			codeActions.push(toggleItalic)
 		}
-		const insertMermaidTipsCodeAction = await this.insertMermaidTipsCodeAction(document, range, lineContent)
-		if (insertMermaidTipsCodeAction) {
-			codeActions.push(insertMermaidTipsCodeAction)
+		const toggleStrikethrough = await this.toggleStrikethrough(document, lineContent)
+		if (toggleStrikethrough) {
+			codeActions.push(toggleStrikethrough)
+		}
+		const toggleCodeSpan = await this.toggleCodeSpan(document, lineContent)
+		if (toggleCodeSpan) {
+			codeActions.push(toggleCodeSpan)
+		}
+		const toggleOrderedList = await this.toggleOrderedList(document, lineContent)
+		if (toggleOrderedList) {
+			codeActions.push(toggleOrderedList)
+		}
+		const toggleUnorderedList = await this.toggleUnorderedList(document, lineContent)
+		if (toggleUnorderedList) {
+			codeActions.push(toggleUnorderedList)
+		}
+		const toggleTaskCodeAction = await this.toggleTaskCodeAction(document, lineContent)
+		if (toggleTaskCodeAction) {
+			codeActions.push(toggleTaskCodeAction)
 		}
 
-		const imageAddrImageStyleToBase64ImageStyleJob = this.imageAddrImageStyleToBase64ImageStyle(document, range, lineContent);
-		const base64ContentToBase64ImageStyleJob = this.base64ContentToBase64ImageStyle(document, range, lineContent);
+		const insertCodeBlock = await this.insertCodeBlock(document, lineContent)
+		if (insertCodeBlock) {
+			codeActions.push(insertCodeBlock)
+		}
+		const insertImageBlockCodeAction = await this.insertImageBlockCodeAction(document, lineContent)
+		if (insertImageBlockCodeAction) {
+			codeActions.push(insertImageBlockCodeAction)
+		}
+		const insertLinkBlockCodeAction = await this.insertLinkBlockCodeAction(document, lineContent)
+		if (insertLinkBlockCodeAction) {
+			codeActions.push(insertLinkBlockCodeAction)
+		}
+		const insertTableCodeAction = await this.insertTableCodeAction(document, lineContent)
+		if (insertTableCodeAction) {
+			codeActions.push(insertTableCodeAction)
+		}
+		const insertMermaidBlockCodeAction = await this.insertMermaidBlockCodeAction(document, lineContent)
+		if (insertMermaidBlockCodeAction) {
+			codeActions.push(insertMermaidBlockCodeAction)
+		}
+
+		const imageAddrImageStyleToBase64ImageStyleJob = this.imageAddrImageStyleToBase64ImageStyle(document, range, lineContent.text);
+		const base64ContentToBase64ImageStyleJob = this.base64ContentToBase64ImageStyle(document, range, lineContent.text);
 		const imageAddrImageStyleToBase64ImageStyle = await imageAddrImageStyleToBase64ImageStyleJob;
 		if (imageAddrImageStyleToBase64ImageStyle) {
 			codeActions.unshift(imageAddrImageStyleToBase64ImageStyle);
@@ -82,95 +119,145 @@ export class CodeActionsProvider implements vscode.CodeActionProvider {
 		return codeActions;
 	}
 
-	async insertLinkBlockTipsCodeAction(document: vscode.TextDocument, range: vscode.Range, lineContent: string): Promise<vscode.CodeAction | undefined> {
-		if (lineContent.trim() !== '' && lineContent !== 'link') {
-			return undefined
-		}
-		const codeAction = new vscode.CodeAction(`Insert Link Block`, vscode.CodeActionKind.QuickFix);
-		codeAction.edit = new vscode.WorkspaceEdit();
-		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), '');
+	async toggleHeadingUp(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Header Up`, vscode.CodeActionKind.QuickFix);
 		codeAction.command = {
-			title: '',
-			command: 'editor.action.insertSnippet',
-			arguments: [{
-				snippet: "[${1:title}](${2:https://example.com})",
-			}],
+			title: ' H+ ', // CodeAction 显示的文字
+			command: 'extension.editor.toggleHeadingUp',
+			arguments: []
+		};
+		return codeAction;
+	}
+
+	async toggleHeadingDown(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Header Down`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: ' H- ', // CodeAction 显示的文字
+			command: 'extension.editor.toggleHeadingDown',
+			arguments: []
+		};
+		return codeAction;
+	}
+
+	async toggleBold(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Toggle Bold`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: ' Bold ', // CodeAction 显示的文字
+			command: 'extension.editor.toggleBold',
+			arguments: []
+		};
+		return codeAction;
+	}
+
+	async toggleItalic(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Toggle Italic`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: ' Italic ', // CodeAction 显示的文字
+			command: 'extension.editor.toggleItalic',
+			arguments: []
+		};
+		return codeAction;
+	}
+
+	async toggleStrikethrough(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Toggle Strikethrough`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: ' Strikethrough ', // CodeAction 显示的文字
+			command: 'extension.editor.toggleStrikethrough',
+			arguments: []
+		};
+		return codeAction;
+	}
+
+	async toggleOrderedList(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Toggle Number List`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: ' NumList ', // CodeAction 显示的文字
+			command: 'extension.editor.toggleOrderedList',
+			arguments: []
 		};
 		return codeAction;
 	}
 
 
-	async insertImageBlockTipsCodeAction(document: vscode.TextDocument, range: vscode.Range, lineContent: string): Promise<vscode.CodeAction | undefined> {
-		if (lineContent.trim() !== '' && lineContent !== 'image') {
-			return undefined
-		}
+	async toggleUnorderedList(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Toggle Dash List`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: ' DashList ', // CodeAction 显示的文字
+			command: 'extension.editor.toggleUnorderedList',
+			arguments: []
+		};
+		return codeAction;
+	}
+
+	async toggleCodeSpan(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Toggle Code Span`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: ' CodeSpan ', // CodeAction 显示的文字
+			command: 'extension.editor.toggleCodeSpan',
+			arguments: []
+		};
+		return codeAction;
+	}
+
+	async toggleTaskCodeAction(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Toggle Task List`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: ' Task ',
+			command: 'extension.editor.toggleTaskList',
+			arguments: [],
+		};
+		return codeAction;
+	}
+
+	async insertCodeBlock(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Insert Code Block`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: ' ➕Code ', // CodeAction 显示的文字
+			command: 'extension.editor.insertCodeBlock',
+			arguments: []
+		};
+		return codeAction;
+	}
+
+	async insertImageBlockCodeAction(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
 		const codeAction = new vscode.CodeAction(`Insert Image Block`, vscode.CodeActionKind.QuickFix);
-		codeAction.edit = new vscode.WorkspaceEdit();
-		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), '');
 		codeAction.command = {
-			title: '',
-			command: 'editor.action.insertSnippet',
-			arguments: [{
-				snippet: "![${1:title}](${2:image.png})",
-			}],
+			title: ' ➕Image ',
+			command: 'extension.editor.insertImageBlock',
+			arguments: [],
 		};
 		return codeAction;
 	}
 
-	async insertTableTipsCodeAction(document: vscode.TextDocument, range: vscode.Range, lineContent: string): Promise<vscode.CodeAction | undefined> {
-		if(lineContent.trim() !== '' && lineContent !== 'table') {
-			return undefined
-		}
+	async insertLinkBlockCodeAction(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
+		const codeAction = new vscode.CodeAction(`Insert Link Block`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: ' ➕Link ',
+			command: 'extension.editor.insertLinkBlock',
+			arguments: [],
+		};
+		return codeAction;
+	}
+
+	async insertTableCodeAction(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
 		const codeAction = new vscode.CodeAction(`Insert Table`, vscode.CodeActionKind.QuickFix);
-		codeAction.edit = new vscode.WorkspaceEdit();
-		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), '');
 		codeAction.command = {
-			title: '',
-			command: 'editor.action.insertSnippet',
-			arguments: [{
-				snippet: [
-					"| ${1:Column1} | ${2:Column2} | ${3:Column3} |",
-					"| ------- | ------- | ------- |",
-					"| ${4:Item1}   | ${5:Item1}   | ${6:Item1}   |",
-					"${0}"
-				].join('\n'),
-			}],
+			title: ' ➕Table ',
+			command: 'extension.editor.insertTableBlock',
+			arguments: [],
 		};
 		return codeAction;
 	}
 
-	async insertTaskTipsCodeAction(document: vscode.TextDocument, range: vscode.Range, lineContent: string): Promise<vscode.CodeAction | undefined> {
-		if(lineContent.trim() !== '' && lineContent !== 'task') {
-			return undefined
-		}
-		const codeAction = new vscode.CodeAction(`Insert Task`, vscode.CodeActionKind.QuickFix);
-		codeAction.edit = new vscode.WorkspaceEdit();
-		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), '');
-		codeAction.command = {
-		title: '',
-		command: 'editor.action.insertSnippet',
-		arguments: [{
-			snippet: "- [${1| ,x|}] ${2:text}",
-		}],
-		};
-		return codeAction
-	}
-
-	async insertMermaidTipsCodeAction(document: vscode.TextDocument, range: vscode.Range, lineContent: string): Promise<vscode.CodeAction | undefined> {
-		if(lineContent.trim() !== '' && lineContent !== 'mermaid') {
-			return undefined
-		}
+	async insertMermaidBlockCodeAction(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeAction| undefined> {
 		const codeAction = new vscode.CodeAction(`Insert Mermaid`, vscode.CodeActionKind.QuickFix);
-		codeAction.edit = new vscode.WorkspaceEdit();
-		codeAction.edit.replace(document.uri, new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), '');
 		codeAction.command = {
-			title: '',
-			command: 'editor.action.insertSnippet',
-			arguments: [{
-				snippet: "```mermaid\n${1}\n```",
-			}],
+			title: ' ➕Mermaid ',
+			command: 'extension.editor.insertMermaid',
+			arguments: [],
 		};
-		return codeAction
+		return codeAction;
 	}
 
 	/**
