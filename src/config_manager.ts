@@ -1,5 +1,9 @@
 import * as vscode from 'vscode';
 
 export function getModifyImageWidth(): number {
-    return vscode.workspace.getConfiguration('markdown-image-convert-base64').get('modifyImageWidth', 0);
+    return vscode.workspace.getConfiguration('markdown-intellisense').get('modifyImageWidth', 0);
+}
+
+export function isEnableLineTools(): boolean {
+    return vscode.workspace.getConfiguration('markdown-intellisense').get('enableLineTools', true);
 }

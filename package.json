@@ -45,6 +45,12 @@
 					"minimum": 0,
 					"scope": "application",
 					"description": "modify image width. defaults: original image width"
+				},
+				"markdown-intellisense.enableLineTools": {
+					"type": "boolean",
+					"default": true,
+					"scope": "application",
+					"description": "enable Line Tools"
 				}
 			}
 		}
