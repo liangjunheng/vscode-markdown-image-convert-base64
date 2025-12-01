@@ -13,7 +13,8 @@ export function activate(context: ExtensionContext) {
         commands.registerCommand('extension.editor.toggleMathReverse', () => toggleMath(reverseTransTable)),
         commands.registerCommand('extension.editor.toggleHeadingUp', toggleHeadingUp),
         commands.registerCommand('extension.editor.toggleHeadingDown', toggleHeadingDown),
-        commands.registerCommand('extension.editor.toggleList', toggleList),
+        commands.registerCommand('extension.editor.toggleOrderedList', () => toggleList(ListMarker.NUM)),
+        commands.registerCommand('extension.editor.toggleUnorderedList', () => toggleList(ListMarker.DASH)),
         commands.registerCommand('extension.editor.insertLinkBlock', insertLinkBlock),
         commands.registerCommand('extension.editor.insertImageBlock', insertImageBlock),
         commands.registerCommand('extension.editor.insertCodeBlock', insertCodeBlock),
@@ -239,17 +240,17 @@ function toggleMath(transTable: MathBlockState[]) {
     setMathState(editor, cursor, oldMathBlockState, transTable[(currentStateIndex + 1) % transTable.length])
 }
 
-function toggleList() {
+function toggleList(type: ListMarker) {
     const editor = window.activeTextEditor!;
     const doc = editor.document;
     let batchEdit = new WorkspaceEdit();
 
     for (const selection of editor.selections) {
         if (selection.isEmpty) {
-            toggleListSingleLine(doc, selection.active.line, batchEdit);
+            toggleListSingleLine(doc, selection.active.line, batchEdit, type);
         } else {
             for (let i = selection.start.line; i <= selection.end.line; i++) {
-                toggleListSingleLine(doc, i, batchEdit);
+                toggleListSingleLine(doc, i, batchEdit, type);
             }
         }
     }
@@ -257,19 +258,20 @@ function toggleList() {
     return workspace.applyEdit(batchEdit).then(() => fixMarker(editor));
 }
 
-function toggleListSingleLine(doc: TextDocument, line: number, wsEdit: WorkspaceEdit) {
+function toggleListSingleLine(doc: TextDocument, line: number, wsEdit: WorkspaceEdit, type: ListMarker) {
     const lineText = doc.lineAt(line).text;
     const indentation = lineText.trim().length === 0 ? lineText.length : lineText.indexOf(lineText.trim());
     const lineTextContent = lineText.slice(indentation);
     const currentMarker = getCurrentListStart(lineTextContent);
-    const nextMarker = getNextListStart(currentMarker);
+    // const nextMarker = getNextListStart(currentMarker);
 
     // 1. delete current list marker
     wsEdit.delete(doc.uri, new Range(line, indentation, line, getMarkerEndCharacter(currentMarker, lineText)));
 
     // 2. insert next list marker
-    if (nextMarker !== ListMarker.EMPTY)
-        wsEdit.insert(doc.uri, new Position(line, indentation), nextMarker);
+    if (type !== ListMarker.EMPTY && currentMarker !== type) {
+        wsEdit.insert(doc.uri, new Position(line, indentation), type);
+    }
 }
 
 /**
