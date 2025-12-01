@@ -15,6 +15,7 @@ export function activate(context: ExtensionContext) {
         commands.registerCommand('extension.editor.toggleHeadingDown', toggleHeadingDown),
         commands.registerCommand('extension.editor.toggleOrderedList', () => toggleList(ListMarker.NUM)),
         commands.registerCommand('extension.editor.toggleUnorderedList', () => toggleList(ListMarker.DASH)),
+        commands.registerCommand('extension.editor.toggleTaskList', toggleTaskList),
         commands.registerCommand('extension.editor.insertLinkBlock', insertLinkBlock),
         commands.registerCommand('extension.editor.insertImageBlock', insertImageBlock),
         commands.registerCommand('extension.editor.insertCodeBlock', insertCodeBlock),
@@ -59,6 +60,14 @@ function insertCodeBlock() {
         editor.selection = new Selection(line.range.start, line.range.end);
     }
     return editor.insertSnippet(new SnippetString('\n```$0\n$TM_SELECTED_TEXT\n```'));
+}
+
+function toggleTaskList() {
+    const editor = window.activeTextEditor!;
+    let line = editor.document.lineAt(editor.selection.active.line);
+    editor.selection = new Selection(line.range.start, line.range.end);
+    let content = line.text.replace(/(^-\s\[[ xX]?\]\s)/, "");
+    return editor.insertSnippet(new SnippetString('- [${1| ,x|}] ' + content));
 }
 
 function insertTableBlock() {

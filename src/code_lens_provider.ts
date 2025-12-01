@@ -20,7 +20,7 @@ export class CodeLensProvider implements vscode.CodeLensProvider {
 	// 切换行时，自动触发quickFix
 	initTextSelectionListener(context: vscode.ExtensionContext) {
 		var lastLine = -1;
-		if(vscode.window.activeTextEditor) {
+		if (vscode.window.activeTextEditor) {
 			this.setCurrentLine(vscode.window.activeTextEditor.selection.start.line)
 		}
 		const disposable = vscode.window.onDidChangeTextEditorSelection(async (event) => {
@@ -82,6 +82,10 @@ export class CodeLensProvider implements vscode.CodeLensProvider {
 		const toggleUnorderedList = await this.toggleUnorderedList(document, lineContent);
 		if (toggleUnorderedList) {
 			codeLensList.push(toggleUnorderedList)
+		}
+		const toggleCodeSpan = await this.toggleCodeSpan(document, lineContent);
+		if (toggleCodeSpan) {
+			codeLensList.push(toggleCodeSpan)
 		}
 		const insertTaskCodeLens = await this.insertTaskCodeLens(document, lineContent);
 		if (insertTaskCodeLens) {
@@ -148,9 +152,46 @@ export class CodeLensProvider implements vscode.CodeLensProvider {
 
 	async toggleStrikethrough(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
 		const command: vscode.Command = {
-			title: ' Strike through ', // CodeLens 显示的文字
+			title: ' Strikethrough ', // CodeLens 显示的文字
 			command: 'extension.editor.toggleStrikethrough',
 			arguments: []
+		};
+		return new vscode.CodeLens(currentLine.range, command);
+	}
+
+	async toggleOrderedList(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
+		const command: vscode.Command = {
+			title: ' NumList ', // CodeLens 显示的文字
+			command: 'extension.editor.toggleOrderedList',
+			arguments: []
+		};
+		return new vscode.CodeLens(currentLine.range, command);
+	}
+
+
+	async toggleUnorderedList(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
+		const command: vscode.Command = {
+			title: ' DashList ', // CodeLens 显示的文字
+			command: 'extension.editor.toggleUnorderedList',
+			arguments: []
+		};
+		return new vscode.CodeLens(currentLine.range, command);
+	}
+
+	async toggleCodeSpan(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
+		const command: vscode.Command = {
+			title: ' CodeSpan ', // CodeLens 显示的文字
+			command: 'extension.editor.toggleCodeSpan',
+			arguments: []
+		};
+		return new vscode.CodeLens(currentLine.range, command);
+	}
+
+	async insertTaskCodeLens(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
+		const command: vscode.Command = {
+			title: ' Task ',
+			command: 'extension.editor.toggleTaskList',
+			arguments: [],
 		};
 		return new vscode.CodeLens(currentLine.range, command);
 	}
@@ -162,42 +203,6 @@ export class CodeLensProvider implements vscode.CodeLensProvider {
 			arguments: []
 		};
 		return new vscode.CodeLens(currentLine.range, command);
-	}
-
-	async toggleOrderedList(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
-		const command: vscode.Command = {
-			title: ' Ordered List ', // CodeLens 显示的文字
-			command: 'extension.editor.toggleOrderedList',
-			arguments: []
-		};
-		return new vscode.CodeLens(currentLine.range, command);
-	}
-
-	
-	async toggleUnorderedList(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
-		const command: vscode.Command = {
-			title: ' Unordered List ', // CodeLens 显示的文字
-			command: 'extension.editor.toggleUnorderedList',
-			arguments: []
-		};
-		return new vscode.CodeLens(currentLine.range, command);
-	}
-
-	async insertTaskCodeLens(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
-		const lineContent = currentLine.text
-		var snippet = "- [${1| ,x|}] ${2:text}"
-		if (lineContent.trim() !== '') {
-			snippet = `- [\${1| ,x|}] ${lineContent}`
-		}
-		const image: vscode.Command = {
-			title: ' Task ',
-			command: 'extension.insertSnippetWithRange',
-			arguments: [{
-				snippet: snippet,
-				selection: currentLine.range
-			}],
-		};
-		return new vscode.CodeLens(currentLine.range, image);
 	}
 
 	async insertImageBlockCodeLens(document: vscode.TextDocument, currentLine: vscode.TextLine): Promise<vscode.CodeLens | undefined> {
