@@ -20,6 +20,11 @@ export function registerDecorationHover(context: vscode.ExtensionContext, canLan
         if (!editor) {
             return;
         }
+        const languageId = editor.document.languageId
+        if(languageId !== 'markdown' && languageId !== 'tex' && languageId !== 'latex') {
+            return;
+        }
+        
         const currentLine = editor.selection.active.line; // 当前光标所在行号
 
         // 如果你还要加“必须是空行”的判断，可以在这里加：
