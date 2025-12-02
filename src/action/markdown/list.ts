@@ -1,287 +1,280 @@
-import * as vscode from 'vscode';
-import { getConfig } from '../../config/configuration';
-import { usefulEditor } from '../../utilities/active_editor';
+import { commands, env, ExtensionContext, Position, Range, Selection, SnippetString, TextDocument, TextEditor, window, workspace, WorkspaceEdit } from 'vscode';
 
-const ListTypes = ["UnorderPlus", "UnorderAsterisk", "UnorderDash", "OrderDot", "OrderParen"];
-type ListType = "UnorderPlus"| "UnorderAsterisk"| "UnorderDash"| "OrderDot"| "OrderParen"|"Normal";
-//const isOrderType = (targetType:ListType)=>(targetType === "UnorderPlus"||targetType === "UnorderAsterisk"||targetType === "UnorderDash")
-const ListTypeInfo: {
-    [listType: string]: {
-        symbol: string,
-        indent: number,
-        regex: RegExp
-    }
-} = {
-    "UnorderPlus": { symbol: "+ ", indent: 2, regex: /^\s?(\+\s)/ },
-    "UnorderAsterisk": { symbol: "* ", indent: 2, regex: /^\s?(\*\s)/ },
-    "UnorderDash": { symbol: "- ", indent: 2, regex: /^\s?(-\s)/ },
-    "OrderDot": { symbol: ". ", indent: 3, regex: /^\s?([0-9]+\.\s)/ },
-    "OrderParen": { symbol: ") ", indent: 3, regex: /^\s?([0-9]+\)\s)/ },
-    "Normal": { symbol: "", indent: 0, regex: /^(\s[^\s]|[^\s])/ }, //except above
-};
-
-function getUnorderListType():ListType {
-    const configType = getConfig("builtin.markdown.unorderListStyle",String("+"));
-    switch (configType) {
-        case "+": return "UnorderPlus";
-        case "-": return "UnorderDash";
-        case "*": return "UnorderAsterisk";
-        default: return "UnorderPlus";
-    }
+/**
+ * List candidate markers enum
+ */
+export enum ListMarker {
+    EMPTY = "",
+    DASH = "- ",
+    STAR = "* ",
+    PLUS = "+ ",
+    NUM = "1. ",
+    TASK = "- [ ] ",
+    NUM_CLOSING_PARETHESES = "1) "
 }
 
-function getOrderListType():ListType {
-    const configType = getConfig("builtin.markdown.orderListStyle",String("1."));
-    switch (configType) {
-        case "1.": return "OrderDot";
-        case "1)": return "OrderParen";
-        default: return "OrderDot";
-    }
-}
+export function toggleList(type: ListMarker) {
+    const editor = window.activeTextEditor!;
+    const doc = editor.document;
+    let batchEdit = new WorkspaceEdit();
 
-const tabRegExp = /^(\s+)/;
-function getTabLength(editor: vscode.TextEditor, line: number):number {
-    const lineString = editor.document.lineAt(line).text;
-    const matcher = tabRegExp.exec(lineString);
-    if (!matcher) {return 0;}
-    return matcher[1].length;
-}
-
-function checkNewLine(editor: vscode.TextEditor, line: number): boolean{
-    const lineString = editor.document.lineAt(line).text;
-    return (lineString === "" || lineString === "\n");
-}
-
-function findListRange(editor: vscode.TextEditor, startLine: number): ListRange {
-    const selfLength = getTabLength(editor, startLine);
-    const allLine = editor.document.lineCount-1;
-    //const tabLength: { [line: number]: number } = {};
-    let minList:number[] = [];
-    let aboveLine = startLine;
-    for (aboveLine = startLine; aboveLine >= 1; aboveLine--){
-        const aboveLength = getTabLength(editor, aboveLine);
-        if (aboveLength < selfLength||checkNewLine(editor,aboveLine)) { break; }
-        else if (aboveLength === selfLength) { minList.push(aboveLine); }
-        //tabLength[aboveLine] = aboveLength;
-    }
-    aboveLine++;
-    let belowLine = startLine; //TODO： here can reduce calculation
-    for (belowLine = startLine; belowLine <= allLine; belowLine++){
-        const belowLength = getTabLength(editor, belowLine);
-        if (belowLength < selfLength||checkNewLine(editor,belowLine)) { break; }
-        else if (belowLength === selfLength) { minList.push(belowLine); }
-        //tabLength[belowLine] = belowLength; 
-    }
-    belowLine--;
-    minList.sort();
-    if (aboveLine >= belowLine) { // when meet blank line
-        aboveLine = startLine;
-        belowLine = startLine;
-        minList = [startLine];
-    }
-    return [aboveLine, belowLine, { indent: selfLength, minList }];
-}
-
-function findOutsideLine(editor: vscode.TextEditor, startLine: number, endLine: number):{indent:number,minList: number[]} {
-    let minList: number[] = [];
-    let indent = Number.MAX_VALUE;
-    for (let line = startLine; line <= endLine; line++){
-        const tabLength = getTabLength(editor, line);
-        if (indent > tabLength) {
-            minList = [line];
-            indent = tabLength;
-        }
-        else if(indent === tabLength) {
-            minList.push(line);
-        }
-    }
-    return { indent, minList };
-}
-
-export async function toggleList(order:boolean) {
-    const editor: vscode.TextEditor | undefined = usefulEditor;
-    if (!editor||!editor.selection) { return; }
-    let targetType:ListType = getUnorderListType();
-    if (order) {
-        targetType = getOrderListType();
-    }
-    else {
-        
-    }    
-    let startLine: number, endLine: number;
-    let minList: number[] = [];
-    let indent = Number.MAX_VALUE;
-    if (editor.selection.start.isEqual(editor.selection.end)) {
-        [startLine, endLine, { indent, minList }] = findListRange(editor, editor.selection.end.line);
-    }
-    else {
-        [startLine, endLine] = [editor.selection.start.line, editor.selection.end.line];
-        ({ indent, minList } = findOutsideLine(editor,startLine, endLine));
-    }
-    
-    let toggleOn = true;
-    await editor.edit((editBuilder: vscode.TextEditorEdit) => {
-        let i = 1;
-        for (let line = startLine; line <= endLine; line++) {
-            if (minList.includes(line)) {
-                const lineType = checkListType(editor, line, indent);
-                const haveToggledOn = lineType === targetType;
-                toggleOn = toggleOn && haveToggledOn;
-                if (!haveToggledOn) {
-                    const lineRange: vscode.Range = new vscode.Range(new vscode.Position(line, 0 + indent), new vscode.Position(line, 8 + indent));
-                    const lineString = editor.document.getText(lineRange);
-                    lineToList(editBuilder, lineString, line, indent, lineType, getStyleForLineToList(targetType, i));
-                }
-                i++;
-            }
-            else {
-                const parentType = findParentListType(editor, line);
-                // if parent is 2, target is 3, should insert " " 
-                const offset = ListTypeInfo[targetType].indent - ListTypeInfo[parentType].indent;
-                if (offset >= 0) {
-                    for (let j = 1; j <= offset ; j++){
-                        editBuilder.insert(new vscode.Position(line, 0)," ");
-                    }
-                }
-                else {
-                    for (let j = 1; j <= -offset ; j++){
-                        editBuilder.delete(new vscode.Range(new vscode.Position(line, 0),new vscode.Position(line, 1)));
-                    }
-                }
+    for (const selection of editor.selections) {
+        if (selection.isEmpty) {
+            toggleListSingleLine(doc, selection.active.line, batchEdit, type);
+        } else {
+            for (let i = selection.start.line; i <= selection.end.line; i++) {
+                toggleListSingleLine(doc, i, batchEdit, type);
             }
         }
-        if (toggleOn) {//should toggle off
-            for (let line = startLine; line <= endLine; line++) {
-                if (minList.includes(line)) {//
-                    const lineRange: vscode.Range = new vscode.Range(new vscode.Position(line, 0 + indent), new vscode.Position(line, 8 + indent));
-                    const lineString = editor.document.getText(lineRange);
-                    lineToList(editBuilder, lineString, line, indent, targetType,"");
-                }
-                else {//delete the tab
-                    editBuilder.delete(new vscode.Range(new vscode.Position(line, 0), new vscode.Position(line, ListTypeInfo[targetType].indent)));
-                }
+    }
+
+    return workspace.applyEdit(batchEdit).then(() => fixMarker(editor));
+}
+
+function toggleListSingleLine(doc: TextDocument, line: number, wsEdit: WorkspaceEdit, type: ListMarker) {
+    const lineText = doc.lineAt(line).text;
+    const indentation = lineText.trim().length === 0 ? lineText.length : lineText.indexOf(lineText.trim());
+    const lineTextContent = lineText.slice(indentation);
+    const currentMarker = getCurrentListStart(lineTextContent);
+    console.log(`currentMarker: ${currentMarker}`)
+    // const nextMarker = getNextListStart(currentMarker);
+
+    // 1. delete current list marker
+    wsEdit.delete(doc.uri, new Range(line, indentation, line, getMarkerEndCharacter(currentMarker, lineText)));
+
+    // 2. insert next list marker
+    if (type !== ListMarker.EMPTY && currentMarker !== type) {
+        wsEdit.insert(doc.uri, new Position(line, indentation), type);
+    }
+}
+
+function getListMarker(listMarker: string): ListMarker {
+    if ("- " === listMarker) {
+        return ListMarker.DASH;
+    } else if ("* " === listMarker) {
+        return ListMarker.STAR;
+    } else if ("+ " === listMarker) {
+        return ListMarker.PLUS;
+    } else if ("1. " === listMarker) {
+        return ListMarker.NUM;
+    } else if ("1) " === listMarker) {
+        return ListMarker.NUM_CLOSING_PARETHESES;
+    } else if (/(^-\s\[[ xX]?\]\s)/.test(listMarker)) {
+        return ListMarker.TASK;
+    } else {
+        return ListMarker.EMPTY;
+    }
+}
+
+const listMarkerSimpleListStart = [ListMarker.DASH, ListMarker.STAR, ListMarker.PLUS]
+const listMarkerDefaultMarkerArray = [ListMarker.DASH, ListMarker.STAR, ListMarker.PLUS, ListMarker.NUM, ListMarker.NUM_CLOSING_PARETHESES, ListMarker.TASK]
+const listMarkerNumRegex = /^\d+\. /;
+const listMarkerNumClosingParethesesRegex = /^\d+\) /;
+const listMarkTaskRegex = /(^-\s\[[ xX]?\]\s)/;
+
+function getMarkerEndCharacter(currentMarker: ListMarker, lineText: string): number {
+    const indentation = lineText.trim().length === 0 ? lineText.length : lineText.indexOf(lineText.trim());
+    const lineTextContent = lineText.slice(indentation);
+
+    let endCharacter = indentation;
+    if (listMarkerSimpleListStart.includes(currentMarker)) {
+        // `- `, `* `, `+ `
+        endCharacter += 2;
+    } else if (listMarkerNumRegex.test(lineTextContent)) {
+        // number
+        const lenOfDigits = /^(\d+)\./.exec(lineText.trim())![1].length;
+        endCharacter += lenOfDigits + 2;
+    } else if (listMarkerNumClosingParethesesRegex.test(lineTextContent)) {
+        // number with )
+        const lenOfDigits = /^(\d+)\)/.exec(lineText.trim())![1].length;
+        endCharacter += lenOfDigits + 2;
+    } else if (listMarkTaskRegex.test(lineTextContent)) {
+        const lenOfDigits = listMarkTaskRegex.exec(lineText.trim())![1].length;
+        endCharacter = lenOfDigits;
+    }
+    return endCharacter;
+}
+
+/**
+ * get list start marker
+ */
+function getCurrentListStart(lineTextContent: string): ListMarker {
+    if (listMarkTaskRegex.test(lineTextContent)) {
+        return ListMarker.TASK;
+    } else if (lineTextContent.startsWith(ListMarker.DASH)) {
+        return ListMarker.DASH;
+    } else if (lineTextContent.startsWith(ListMarker.STAR)) {
+        return ListMarker.STAR;
+    } else if (lineTextContent.startsWith(ListMarker.PLUS)) {
+        return ListMarker.PLUS;
+    } else if (listMarkerNumRegex.test(lineTextContent)) {
+        return ListMarker.NUM;
+    } else if (listMarkerNumClosingParethesesRegex.test(lineTextContent)) {
+        return ListMarker.NUM_CLOSING_PARETHESES;
+    } else {
+        return ListMarker.EMPTY;
+    }
+}
+
+/**
+ * get next candidate marker from configArray
+ */
+function getNextListStart(current: ListMarker): ListMarker {
+    const configArray = getCandidateMarkers();
+    let next = configArray[0];
+    const index = configArray.indexOf(current);
+    if (index >= 0 && index < configArray.length - 1)
+        next = configArray[index + 1];
+    return next;
+}
+
+/**
+ * get candidate markers array from configuration 
+ */
+function getCandidateMarkers(): ListMarker[] {
+    // read configArray from configuration and append space
+    let configArray = workspace.getConfiguration('extension.list.toggle').get<string[]>('candidate-markers');
+    if (!(configArray instanceof Array))
+        return listMarkerDefaultMarkerArray;
+
+    // append a space after trim, markers must end with a space and remove unknown markers
+    let listMarkerArray = configArray.map((e) => getListMarker(e + " ")).filter((e) => listMarkerDefaultMarkerArray.includes(e));
+    // push empty in the configArray for init status without list marker
+    listMarkerArray.push(ListMarker.EMPTY);
+
+    return listMarkerArray;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Returns the line index of the next ordered list item starting from the specified line.
+ *
+ * @param line
+ * Defaults to the beginning of the current primary selection (`editor.selection.start.line`)
+ * in order to find the first marker following either the cursor or the entire selected range.
+ */
+function findNextMarkerLineNumber(editor: TextEditor, line = editor.selection.start.line): number {
+    while (line < editor.document.lineCount) {
+        const lineText = editor.document.lineAt(line).text;
+
+        if (lineText.startsWith('#')) {
+            // Don't go searching past any headings
+            return -1;
+        }
+
+        if (/^\s*[0-9]+[.)] +/.exec(lineText) !== null) {
+            return line;
+        }
+        line++;
+    }
+    return -1;
+}
+
+/**
+ * Looks for the previous ordered list marker at the same indentation level
+ * and returns the marker number that should follow it.
+ * 
+ * @param currentIndentation treat tabs as if they were replaced by spaces with a tab stop of 4 characters
+ *
+ * @returns the fixed marker number
+ */
+function lookUpwardForMarker(editor: TextEditor, line: number, currentIndentation: number): number {
+    let prevLine = line;
+    while (--prevLine >= 0) {
+        const prevLineText = editor.document.lineAt(prevLine).text.replace(/\t/g, '    ');
+        let matches;
+        if ((matches = /^(\s*)(([0-9]+)[.)] +)/.exec(prevLineText)) !== null) {
+            // The previous line has an ordered list marker
+            const prevLeadingSpace: string = matches[1];
+            const prevMarker = matches[3];
+            if (currentIndentation < prevLeadingSpace.length) {
+                // yet to find a sibling item
+                continue;
+            } else if (
+                currentIndentation >= prevLeadingSpace.length
+                && currentIndentation <= (prevLeadingSpace + prevMarker).length
+            ) {
+                // found a sibling item
+                return Number(prevMarker) + 1;
+            } else if (currentIndentation > (prevLeadingSpace + prevMarker).length) {
+                // found a parent item
+                return 1;
+            } else {
+                // not possible
+            }
+        } else if ((matches = /^(\s*)([-+*] +)/.exec(prevLineText)) !== null) {
+            // The previous line has an unordered list marker
+            const prevLeadingSpace: string = matches[1];
+            if (currentIndentation >= prevLeadingSpace.length) {
+                // stop finding
+                break;
+            }
+        } else if ((matches = /^(\s*)\S/.exec(prevLineText)) !== null) {
+            // The previous line doesn't have a list marker
+            if (matches[1].length < 3) {
+                // no enough indentation for a list item
+                break;
             }
         }
-    });
-    
-    
-}
-type ListRange = [startLine: number, endLine: number, { indent: number, minList: number[] }];
-
-
-function getStyleForLineToList(targetType:ListType, order: number =1 ) {
-    let replaceStyle:string = "";
-    switch (targetType) {
-        case 'UnorderPlus':
-        case 'UnorderAsterisk':
-        case 'UnorderDash':
-            replaceStyle = ListTypeInfo[targetType].symbol;
-            break;
-        case 'OrderDot':
-        case 'OrderParen':
-            replaceStyle = `${order}${ListTypeInfo[targetType].symbol}`;
-            break;
-        case 'Normal':break;
     }
-    return replaceStyle;
+    return 1;
 }
 
-//when replaceStyle === "" => lineToNormal
-function lineToList(editBuilder: vscode.TextEditorEdit,lineString:string, line: number, indent:number, listType: ListType, replaceStyle:string  ) {
-    if(listType==="Normal") {
-        editBuilder.insert(new vscode.Position(line,0+indent),replaceStyle);
+/**
+ * Fix ordered list marker *iteratively* starting from current line
+ */
+export function fixMarker(editor: TextEditor, line?: number): Thenable<unknown> | void {
+    if (!workspace.getConfiguration('markdown.extension.orderedList').get<boolean>('autoRenumber')) return;
+    if (workspace.getConfiguration('markdown.extension.orderedList').get<string>('marker') == 'one') return;
+
+    if (line === undefined) {
+        line = findNextMarkerLineNumber(editor);
+    }
+    if (line < 0 || line >= editor.document.lineCount) {
         return;
     }
-    const matcher = ListTypeInfo[listType].regex.exec(lineString);
-    const substring = matcher![1];
-    const charPos = lineString.indexOf(substring);
-    const replaceRange = new vscode.Range(new vscode.Position(line, 0 + indent + charPos), new vscode.Position(line, 0 + indent + charPos + substring.length));
-    editBuilder.replace(replaceRange, replaceStyle);
-}
 
+    let currentLineText = editor.document.lineAt(line).text;
+    let matches;
+    if ((matches = /^(\s*)([0-9]+)([.)])( +)/.exec(currentLineText)) !== null) { // ordered list
+        let leadingSpace = matches[1];
+        let marker = matches[2];
+        let delimiter = matches[3];
+        let trailingSpace = matches[4];
+        let fixedMarker = lookUpwardForMarker(editor, line, leadingSpace.replace(/\t/g, '    ').length);
+        let listIndent = marker.length + delimiter.length + trailingSpace.length;
+        let fixedMarkerString = String(fixedMarker);
 
-export async function toggleCheckList() {
-    const editor: vscode.TextEditor | undefined = usefulEditor;
-    if (!editor||!editor.selection) { return; }
-    // if (editor.selection.start.isEqual(editor.selection.end)) {}
-    const startLine: number = editor.selection.start.line;
-    const endLine: number = editor.selection.end.line;
-    let { indent, minList } = findOutsideLine(editor,startLine, endLine);
-    let toggleOn = true;
-    await editor.edit((editBuilder: vscode.TextEditorEdit) => {
-        for (let line = startLine; line <= endLine; line++){
-            if (minList.includes(line)) {
-                const lineRange: vscode.Range = new vscode.Range(new vscode.Position(line, 0 + indent), new vscode.Position(line, 12 + indent));
-                const lineString = editor.document.getText(lineRange);
-                const lineType = checkListType(editor, line, indent);
-                const haveToggledOn = checkCheckList(editor, line, indent);
-                toggleOn = toggleOn && haveToggledOn;
-                if (!haveToggledOn) {
-                    lineToCheckList(editBuilder, lineString, line, indent,lineType, false);
+        return editor.edit(
+            // fix the marker (current line)
+            editBuilder => {
+                if (marker === fixedMarkerString) {
+                    return;
+                }
+                // Add enough trailing spaces so that the text is still aligned at the same indentation level as it was previously, but always keep at least one space
+                fixedMarkerString += delimiter + " ".repeat(Math.max(1, listIndent - (fixedMarkerString + delimiter).length));
+
+                editBuilder.replace(new Range(line!, leadingSpace.length, line!, leadingSpace.length + listIndent), fixedMarkerString);
+            },
+            { undoStopBefore: false, undoStopAfter: false }
+        ).then(() => {
+            let nextLine = line! + 1;
+            while (editor.document.lineCount > nextLine) {
+                const nextLineText = editor.document.lineAt(nextLine).text;
+                if (/^\s*[0-9]+[.)] +/.test(nextLineText)) {
+                    return fixMarker(editor, nextLine);
+                } else if (
+                    editor.document.lineAt(nextLine - 1).isEmptyOrWhitespace  // This line is a block
+                    && !nextLineText.startsWith(" ".repeat(3))                // and doesn't have enough indentation
+                    && !nextLineText.startsWith("\t")                         // so terminates the current list.
+                ) {
+                    return;
+                } else {
+                    nextLine++;
                 }
             }
-            
-        }
-        if (toggleOn) {
-            for (let line = startLine; line <= endLine; line++){
-                if (minList.includes(line)) {
-                    const lineRange: vscode.Range = new vscode.Range(new vscode.Position(line, 0 + indent), new vscode.Position(line, 12 + indent));
-                    const lineString = editor.document.getText(lineRange);
-                    const lineType = checkListType(editor, line, indent);
-                    lineToCheckList(editBuilder, lineString, line, indent,lineType, true);
-                }
-            }
-        }
-    });
-}
-
-function lineToCheckList(editBuilder: vscode.TextEditorEdit,lineString:string, line: number, indent:number, listType: ListType, shouldToggleOff: boolean) {
-    if(listType==="Normal") {
-        if (!shouldToggleOff) { editBuilder.insert(new vscode.Position(line, 0 + indent), `${getConfig("builtin.markdown.unorderListStyle",String("+"))} [ ] `); }
-        return;
-    }
-    const matcher = ListTypeInfo[listType].regex.exec(lineString);
-    const substring = matcher![1];
-    const charPos = lineString.indexOf(substring);
-    if (!shouldToggleOff) {
-        editBuilder.insert(new vscode.Position(line, 0 + indent + charPos+substring.length), "[ ] ");
-    }
-    else {
-        const deleteRange = new vscode.Range(new vscode.Position(line, 0 + indent + charPos+substring.length), new vscode.Position(line, 0 + indent + charPos + substring.length+4));
-        editBuilder.delete(deleteRange);
-    }
-}
-
-const checkListRegExp = /^\s?(([0-9]+(\)|\.))|\*|\+|\-)\s\[(\s|x|X)\]\s/;
-function checkCheckList(editor: vscode.TextEditor, line: number, indent: number) {
-    const lineRange: vscode.Range = new vscode.Range(new vscode.Position(line, 0+indent), new vscode.Position(line, 8+indent));
-    const lineString: string = editor.document.getText(lineRange);
-    return checkListRegExp.test(lineString);
-}
-
-
-function checkListType(editor: vscode.TextEditor, line: number, indent: number):ListType{
-    const lineRange: vscode.Range = new vscode.Range(new vscode.Position(line, 0+indent), new vscode.Position(line, 8+indent));
-    const lineString: string = editor.document.getText(lineRange);
-    for (let listType of ListTypes) {
-        if (ListTypeInfo[listType!].regex.test(lineString)) {
-            return listType! as ListType ;
-        }
-    }
-    return "Normal";
-}
-
-function findParentListType(editor: vscode.TextEditor, startLine: number){
-    const selfLength = getTabLength(editor, startLine);
-    let aboveLine = startLine; let aboveLength = selfLength;
-    for (aboveLine = startLine; aboveLine >= 1; aboveLine--){
-        aboveLength = getTabLength(editor, aboveLine);
-        if (aboveLength < selfLength) { break; }
-    }
-    if (aboveLine === 0) {
-        return checkListType(editor, startLine, selfLength);
-    }
-    else {
-        return checkListType(editor, aboveLine, aboveLength);
+        });
     }
 }

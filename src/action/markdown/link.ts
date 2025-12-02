@@ -9,7 +9,7 @@ export function insertLinkBlock() {
         const line = editor.document.lineAt(editor.selection.active.line);
         editor.selection = new vscode.Selection(line.range.start, line.range.end);
     }
-    return editor.insertSnippet(new vscode.SnippetString('[${1:title}](${2:$TM_SELECTED_TEXT})'));
+    return editor.insertSnippet(new vscode.SnippetString('[$TM_SELECTED_TEXT](${2:url})'));
 }
 
 //the position of link set to $1
