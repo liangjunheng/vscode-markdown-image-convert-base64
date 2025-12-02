@@ -5,5 +5,5 @@ export function getModifyImageWidth(): number {
 }
 
 export function isEnableLineTools(): boolean {
-    return vscode.workspace.getConfiguration('markdown-intellisense').get('enableLineTools', true);
+    return vscode.workspace.getConfiguration('markdown-intellisense').get('enableLineTools', false);
 }

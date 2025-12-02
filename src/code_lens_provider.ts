@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { isEnableLineTools } from './config_manager';
 
 export class CodeLensProvider implements vscode.CodeLensProvider {
 	static readonly selector: vscode.DocumentSelector = {

@@ -34,18 +34,18 @@ import { isEnableLineTools } from '../config_manager';
 
 
 export function activate(context: vscode.ExtensionContext) {
-	if(isEnableLineTools()) {
-		formatting.activate(context)
-	}
+	formatting.activate(context)
 	commands.activate(context)
 	context.subscriptions.push(vscode.commands.registerCommand('extension.pasteUrl', pasteLink));
 	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('markdown', new CodeActionsProvider(context), {
 		providedCodeActionKinds: CodeActionsProvider.providedCodeActionKinds
 	}));
-	context.subscriptions.push(vscode.languages.registerCodeLensProvider(
-		CodeLensProvider.selector,
-		new CodeLensProvider(context)
-	));
+	if(isEnableLineTools()) {
+		context.subscriptions.push(vscode.languages.registerCodeLensProvider(
+			CodeLensProvider.selector,
+			new CodeLensProvider(context)
+		));
+	}
 }
 
 // this method is called when your extension is deactivated
