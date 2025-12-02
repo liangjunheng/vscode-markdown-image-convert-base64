@@ -1,6 +1,0 @@
-theme: jekyll-theme-cayman
-font:
-  enable: true
-  global:
-    external: true
-    family: Lato
