@@ -10,7 +10,7 @@ import { registerHovers } from './view/hover';
 import { registerEditor, usefulEditor } from './utilities/active_editor';
 import { registerDecorationHover } from './view/hover_decoration';
 import { registerPasteEvent } from './orther/parse_link_utils';
-import { registerCodeActionsProvider } from './orther/codeaction/code_actions_provider';
+import { registerCodeActionCommand, registerCodeActionsProvider } from './orther/codeaction/code_actions_provider';
 
 export function activate(context: vscode.ExtensionContext) {
 	readActions();
@@ -23,6 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.commands.executeCommand('setContext', 'ext.hoverLanguages', getConfig("hover.languages",["markdown"]));
 	registerHovers(context, getConfig("hover.languages"));
 	registerDecorationHover(context, getConfig("hover.languages"));
+	registerCodeActionCommand(context);
 	registerCodeActionsProvider(context);
 	
 

@@ -5,6 +5,36 @@
 import * as vscode from 'vscode';
 import { getMarkdownImageFromLine, imageToBase64 } from './image_to_base64_util';
 
+export function registerCodeActionCommand(context: vscode.ExtensionContext) {
+	context.subscriptions.push(
+		vscode.commands.registerCommand('extension.codeaction.toogleTaskList', () => toogleTaskList()),
+	);
+}
+
+async function toogleTaskList(): Promise<vscode.CodeAction | undefined> {
+	const editor = vscode.window.activeTextEditor
+	if (!editor) {
+		return undefined
+	}
+	const document = editor.document;
+	const range = editor.selection;
+	const lineContent = editor.document.lineAt(range.start).text;
+	const isTaskList = /(^-\s\[[ xX]?\]\s)/.test(lineContent);
+	if (!isTaskList) {
+		return
+	}
+	const isTaskOnStatus = /(^-\s\[[xX]\]\s)/.test(lineContent);
+	let content = lineContent.replace(/(^-\s\[[ xX]?\]\s)/, "");
+	if (isTaskOnStatus) {
+		content = "- [ ] " + content
+	} else {
+		content = "- [x] " + content
+	}
+	await editor.edit((editBuilder: vscode.TextEditorEdit) => {
+		editBuilder.replace(new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), content)
+	});
+}
+
 /**
  * Provides code actions for converting base64 code to ![][image-id] and append base64 code to text's last line.
  */
@@ -21,6 +51,11 @@ export class CodeActionsProvider implements vscode.CodeActionProvider {
 		const lineContent = document.lineAt(start.line);
 		console.log(`provideCodeActions, content: ${lineContent}`)
 
+		const toogleTaskList = await this.toogleTaskList(lineContent.text);
+		if (toogleTaskList) {
+			codeActions.unshift(toogleTaskList);
+		}
+
 		const imageAddrImageStyleToBase64ImageStyle = await this.imageAddrImageStyleToBase64ImageStyle(document, range, lineContent.text);
 		if (imageAddrImageStyleToBase64ImageStyle) {
 			codeActions.unshift(imageAddrImageStyleToBase64ImageStyle);
@@ -32,6 +67,21 @@ export class CodeActionsProvider implements vscode.CodeActionProvider {
 		}
 
 		return codeActions;
+	}
+
+	async toogleTaskList(lineContent: string): Promise<vscode.CodeAction | undefined> {
+		const isTaskList = /(^-\s\[[ xX]?\]\s)/.test(lineContent);
+		if (!isTaskList) {
+			return
+		}
+		const codeAction = new vscode.CodeAction(`Switch Task Status`, vscode.CodeActionKind.QuickFix);
+		codeAction.command = {
+			title: '',
+			command: 'extension.codeaction.toogleTaskList',
+			arguments: [],
+		};
+		codeAction.isPreferred = true;
+		return codeAction;
 	}
 
 	/**
