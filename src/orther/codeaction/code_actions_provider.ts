@@ -19,16 +19,16 @@ async function toogleTaskList(): Promise<vscode.CodeAction | undefined> {
 	const document = editor.document;
 	const range = editor.selection;
 	const lineContent = editor.document.lineAt(range.start).text;
-	const isTaskList = /(^-\s\[[ xX]?\]\s)/.test(lineContent);
+	const isTaskList = /(^\s*-\s+\[[ xX]?\]\s)/.test(lineContent);
 	if (!isTaskList) {
 		return
 	}
-	const isTaskOnStatus = /(^-\s\[[xX]\]\s)/.test(lineContent);
-	let content = lineContent.replace(/(^-\s\[[ xX]?\]\s)/, "");
+	const isTaskOnStatus = /(^\s*-\s+\[[xX]\]\s)/.test(lineContent);
+	let content = lineContent;
 	if (isTaskOnStatus) {
-		content = "- [ ] " + content
+		content = content.replace(/(-\s+\[[ xX]?\]\s)/, "- [ ] ")
 	} else {
-		content = "- [x] " + content
+		content = content.replace(/(-\s+\[[ xX]?\]\s)/, "- [x] ")
 	}
 	await editor.edit((editBuilder: vscode.TextEditorEdit) => {
 		editBuilder.replace(new vscode.Range(new vscode.Position(range.start.line, 0), new vscode.Position(range.start.line, document.lineAt(range.start.line).text.length)), content)
@@ -70,7 +70,7 @@ export class CodeActionsProvider implements vscode.CodeActionProvider {
 	}
 
 	async toogleTaskList(lineContent: string): Promise<vscode.CodeAction | undefined> {
-		const isTaskList = /(^-\s\[[ xX]?\]\s)/.test(lineContent);
+		const isTaskList = /(^\s*-\s+\[[ xX]?\]\s)/.test(lineContent);
 		if (!isTaskList) {
 			return
 		}

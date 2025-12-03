@@ -48,6 +48,11 @@ function toggleListSingleLine(doc: TextDocument, line: number, wsEdit: Workspace
     }
 }
 
+const listMarkerSimpleListStart = [ListMarker.DASH, ListMarker.STAR, ListMarker.PLUS]
+const listMarkerDefaultMarkerArray = [ListMarker.DASH, ListMarker.STAR, ListMarker.PLUS, ListMarker.NUM, ListMarker.NUM_CLOSING_PARETHESES, ListMarker.TASK]
+const listMarkerNumRegex = /^\d+\. /;
+const listMarkerNumClosingParethesesRegex = /^\d+\) /;
+const listMarkTaskRegex = /(^\s*-\s+\[[ xX]?\]\s)/;
 function getListMarker(listMarker: string): ListMarker {
     if ("- " === listMarker) {
         return ListMarker.DASH;
@@ -59,18 +64,12 @@ function getListMarker(listMarker: string): ListMarker {
         return ListMarker.NUM;
     } else if ("1) " === listMarker) {
         return ListMarker.NUM_CLOSING_PARETHESES;
-    } else if (/(^-\s\[[ xX]?\]\s)/.test(listMarker)) {
+    } else if (listMarkTaskRegex.test(listMarker)) {
         return ListMarker.TASK;
     } else {
         return ListMarker.EMPTY;
     }
 }
-
-const listMarkerSimpleListStart = [ListMarker.DASH, ListMarker.STAR, ListMarker.PLUS]
-const listMarkerDefaultMarkerArray = [ListMarker.DASH, ListMarker.STAR, ListMarker.PLUS, ListMarker.NUM, ListMarker.NUM_CLOSING_PARETHESES, ListMarker.TASK]
-const listMarkerNumRegex = /^\d+\. /;
-const listMarkerNumClosingParethesesRegex = /^\d+\) /;
-const listMarkTaskRegex = /(^-\s\[[ xX]?\]\s)/;
 
 function getMarkerEndCharacter(currentMarker: ListMarker, lineText: string): number {
     const indentation = lineText.trim().length === 0 ? lineText.length : lineText.indexOf(lineText.trim());
@@ -89,7 +88,7 @@ function getMarkerEndCharacter(currentMarker: ListMarker, lineText: string): num
         const lenOfDigits = /^(\d+)\)/.exec(lineText.trim())![1].length;
         endCharacter += lenOfDigits + 2;
     } else if (listMarkTaskRegex.test(lineTextContent)) {
-        const lenOfDigits = listMarkTaskRegex.exec(lineText.trim())![1].length;
+        const lenOfDigits = listMarkTaskRegex.exec(lineText)![1].length;
         endCharacter = lenOfDigits;
     }
     return endCharacter;
