@@ -4,6 +4,7 @@
 
 import * as vscode from 'vscode';
 import { getMarkdownImageFromLine, imageToBase64 } from './image_to_base64_util';
+import { getConfig } from '../../config/configuration';
 
 export function registerCodeActionCommand(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
@@ -101,8 +102,9 @@ export class CodeActionsProvider implements vscode.CodeActionProvider {
 		if (localImage?.url === undefined) {
 			return undefined;
 		}
+		const imageWidth = getConfig('builtin.markdown.widthOfImageToBase64', 0);
 
-		const base64 = await imageToBase64(localImage?.url, 1300)
+		const base64 = await imageToBase64(localImage?.url, imageWidth)
 		if (base64 === undefined) {
 			return undefined;
 		}

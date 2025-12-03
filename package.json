@@ -2,7 +2,7 @@
   "name": "markdown-intellisense",
   "displayName": "%toolbar.displayName%",
   "description": "%toolbar.description%",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "publisher": "liangjunheng",
   "author": {
     "name": "liangjunheng",
@@ -71,6 +71,13 @@
     "configuration": {
       "title": "Toolbar",
       "properties": {
+				"toolbar.builtin.markdown.widthOfImageToBase64": {
+					"type": "integer",
+					"default": 0,
+					"minimum": 0,
+					"scope": "application",
+					"description": "%toolbar.builtin.markdown.widthOfImageToBase64.markdownDescription%"
+				},
         "toolbar.builtin.markdown.activate": {
           "type": "boolean",
           "markdownDescription": "%toolbar.builtin.markdown.activate.markdownDescription%",
@@ -84,7 +91,7 @@
             "+",
             "*"
           ],
-          "default": "+"
+          "default": "-"
         },
         "toolbar.builtin.markdown.orderListStyle": {
           "type": "string",
