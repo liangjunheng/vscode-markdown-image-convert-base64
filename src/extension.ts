@@ -17,8 +17,6 @@ export function activate(context: vscode.ExtensionContext) {
 	readToolboxs();
 	registerPasteEvent(context);
 	registerActions(context);
-	// registerPanel(context,registers.commands.openPanel,registers.panel.id,registers.panel.title);
-	// registerViews(context);
 
 	vscode.commands.executeCommand('setContext', 'ext.hoverLanguages', getConfig("hover.languages",["markdown"]));
 	registerHovers(context, getConfig("hover.languages"));
@@ -26,6 +24,9 @@ export function activate(context: vscode.ExtensionContext) {
 	registerCodeActionCommand(context);
 	registerCodeActionsProvider(context);
 	
+	// View Container
+	// registerPanel(context,registers.commands.openPanel,registers.panel.id,registers.panel.title);
+	// registerViews(context);
 
 	//TODO: 这里都没有加入subscriptions
 	onConfigChange(context,"hover.languages", (newValue: []) => {

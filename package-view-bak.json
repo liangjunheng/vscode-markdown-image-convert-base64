@@ -2,7 +2,7 @@
   "name": "markdown-intellisense",
   "displayName": "%toolbar.displayName%",
   "description": "%toolbar.description%",
-  "version": "1.0.9",
+  "version": "1.0.8",
   "publisher": "liangjunheng",
   "author": {
     "name": "liangjunheng",
@@ -68,6 +68,106 @@
         "enablement": "editorLangId in ext.panelLanguages"
       }
     ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "editorLangId in ext.panelLanguages",
+          "command": "toolbar.openPanel",
+          "group": "navigation"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "toolbar",
+          "title": "Toolbar",
+          "icon": "$(tools)"
+        }
+      ]
+    },
+    "views": {
+      "toolbar": [
+        {
+          "id": "toolbar.markdown-toolbar",
+          "name": "Markdown Toolbar",
+          "type": "webview",
+          "contextualTitle": "Markdown Toolbar",
+          "icon": "$(markdown)"
+        },
+        {
+          "id": "toolbar.latex-toolbar",
+          "name": "Latex Toolbar",
+          "type": "webview",
+          "contextualTitle": "Latex Toolbar",
+          "icon": "$(pencil)"
+        },
+        {
+          "id": "toolbar.mercury-toolbar",
+          "name": "Mercury Toolbar",
+          "type": "webview",
+          "contextualTitle": "Mercury Toolbar",
+          "visibility": "hidden",
+          "icon": "$(briefcase)"
+        },
+        {
+          "id": "toolbar.venus-toolbar",
+          "name": "Venus Toolbar",
+          "type": "webview",
+          "contextualTitle": "Venus Toolbar",
+          "visibility": "hidden",
+          "icon": "$(heart)"
+        },
+        {
+          "id": "toolbar.terra-toolbar",
+          "name": "Terra Toolbar",
+          "type": "webview",
+          "contextualTitle": "Terra Toolbar",
+          "visibility": "hidden",
+          "icon": "$(smiley)"
+        },
+        {
+          "id": "toolbar.mars-toolbar",
+          "name": "Mars Toolbar",
+          "type": "webview",
+          "contextualTitle": "Mars Toolbar",
+          "visibility": "hidden",
+          "icon": "$(flame)"
+        },
+        {
+          "id": "toolbar.jupiter-toolbar",
+          "name": "Jupiter Toolbar",
+          "type": "webview",
+          "contextualTitle": "Jupiter Toolbar",
+          "visibility": "hidden",
+          "icon": "$(coffee)"
+        },
+        {
+          "id": "toolbar.saturn-toolbar",
+          "name": "Saturn Toolbar",
+          "type": "webview",
+          "contextualTitle": "Saturn Toolbar",
+          "visibility": "hidden",
+          "icon": "$(circuit-board)"
+        },
+        {
+          "id": "toolbar.uranus-toolbar",
+          "name": "Uranus Toolbar",
+          "type": "webview",
+          "contextualTitle": "Uranus Toolbar",
+          "visibility": "hidden",
+          "icon": "$(game)"
+        },
+        {
+          "id": "toolbar.neptune-toolbar",
+          "name": "Neptune Toolbar",
+          "type": "webview",
+          "contextualTitle": "Neptune Toolbar",
+          "visibility": "hidden",
+          "icon": "$(gift)"
+        }
+      ]
+    },
     "configuration": {
       "title": "Toolbar",
       "properties": {
