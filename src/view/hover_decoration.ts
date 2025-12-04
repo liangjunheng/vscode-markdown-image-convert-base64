@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { selectionContains } from "../action/text_utils";
 import { Toolbox, toolboxs } from "../model/toolbox";
 import { toolboxMarkdown } from "./content/markdown";
 import { intersectionList } from "../utilities/list_utils";
@@ -8,12 +7,16 @@ export function registerDecorationHover(context: vscode.ExtensionContext, canLan
     // 1. 定义一个装饰类型：在当前行末尾显示淡淡的提示
     const currentLineDecoration = vscode.window.createTextEditorDecorationType({
         after: {
-            contentText: '✍️',
+            contentText: '',
             color: new vscode.ThemeColor('editorCodeLens.foreground'),
-            margin: '0 0 0 1em',
+            margin: '0 0 0 100em',
         },
     });
-    context.subscriptions.push(currentLineDecoration);
+    const gutterDecoration = vscode.window.createTextEditorDecorationType({
+        gutterIconPath: context.asAbsolutePath('icon_hover.png'),
+        gutterIconSize: 'contain',
+    });
+    context.subscriptions.push(currentLineDecoration, gutterDecoration);
 
     // 2. 更新当前行装饰：只给“当前行”设置 Decoration
     function updateCurrentLineDecoration(editor: vscode.TextEditor | undefined) {
@@ -37,7 +40,7 @@ export function registerDecorationHover(context: vscode.ExtensionContext, canLan
 
         // 只为当前行创建一个 range
         const line = editor.document.lineAt(currentLine);
-        const range = new vscode.Range(currentLine, line.text.length, currentLine, line.text.length);
+        const range = new vscode.Range(currentLine, 0, currentLine, line.text.length);
         
         // hoverMessage
         const hoverMessage: vscode.MarkdownString[] = [] 
@@ -66,6 +69,7 @@ export function registerDecorationHover(context: vscode.ExtensionContext, canLan
         ];
         // 非常关键：这里会把“其它行”的装饰全部替换掉
         editor.setDecorations(currentLineDecoration, options);
+        editor.setDecorations(gutterDecoration, [{ range }]);
     }
 
     // 3. 监听光标变化，只更新当前行
