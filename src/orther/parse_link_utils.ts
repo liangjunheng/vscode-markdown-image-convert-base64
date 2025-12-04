@@ -1,6 +1,17 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as vscode from 'vscode';
 
+
+const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg', '.tiff'];
+export function isExternalImage(path: string): boolean {
+    // 找到最后一个 . 的位置
+    const dotIndex = path.lastIndexOf('.');
+    if (dotIndex === -1) return false;
+    // 取后缀，带点：".png"
+    const ext = path.slice(dotIndex).toLowerCase();
+    return IMAGE_EXTS.includes(ext);
+}
+
 export function isExternalUrl(path: string): boolean {
     // Get this regex from:
     //	- https://mathiasbynens.be/demo/url-regex
@@ -102,7 +113,7 @@ function getCursorContext():
     return { editor, range, text };
 }
 
-export async function pasteLink(
+async function pasteLink(
 ) {
     const { editor, range, text } = getCursorContext();
     if (editor === undefined) {

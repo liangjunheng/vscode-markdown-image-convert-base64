@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getSelectionRange, insertSnippet } from '../text_utils';
 import { checkUrl } from '../../utilities/url_utils';
 import { usefulEditor } from '../../utilities/active_editor';
+import { isExternalUrl } from '../../orther/parse_link_utils';
 
 export function insertLinkBlock() {
     const editor = vscode.window.activeTextEditor!;
@@ -9,7 +10,12 @@ export function insertLinkBlock() {
         const line = editor.document.lineAt(editor.selection.active.line);
         editor.selection = new vscode.Selection(line.range.start, line.range.end);
     }
-    return editor.insertSnippet(new vscode.SnippetString('[$TM_SELECTED_TEXT](${2:url})'));
+    const selectedText = editor.document.getText(editor.selection);
+    if(isExternalUrl(selectedText)) {
+        return editor.insertSnippet(new vscode.SnippetString('[${1:title}]($TM_SELECTED_TEXT)'));
+    } else {
+        return editor.insertSnippet(new vscode.SnippetString('[$TM_SELECTED_TEXT](${2:url})'));
+    }
 }
 
 //the position of link set to $1
