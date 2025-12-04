@@ -45,18 +45,16 @@ export function registerDecorationHover(context: vscode.ExtensionContext, canLan
         // hoverMessage
         const hoverMessage: vscode.MarkdownString[] = [] 
         // 没有选区才需要添加，避免和hover.ts冲突，重复添加hoverMessage
-        if (editor.selection.isEmpty || !editor.selection.contains(new vscode.Position(line.lineNumber, line.text.length))) {
-            const toolboxList = Object.values(toolboxs).flatMap(e => e);
-            for (const toolbox of toolboxList) {
-                const list = typeof toolbox.activate === "boolean"
-                    ? (toolbox.activate ? canLanguages : [])
-                    : intersectionList(toolbox.activate.languages, canLanguages);
-                if (list.length > 0) {
-                    const markdowns = toolboxMarkdown(toolbox, editor.document.languageId);
-                    for (const markdown of markdowns) {
-                        markdown.isTrusted = true;
-                        hoverMessage.push(markdown)
-                    }
+        const toolboxList = Object.values(toolboxs).flatMap(e => e);
+        for (const toolbox of toolboxList) {
+            const list = typeof toolbox.activate === "boolean"
+                ? (toolbox.activate ? canLanguages : [])
+                : intersectionList(toolbox.activate.languages, canLanguages);
+            if (list.length > 0) {
+                const markdowns = toolboxMarkdown(toolbox, editor.document.languageId);
+                for (const markdown of markdowns) {
+                    markdown.isTrusted = true;
+                    hoverMessage.push(markdown)
                 }
             }
         }

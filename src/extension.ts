@@ -19,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
 	registerActions(context);
 
 	vscode.commands.executeCommand('setContext', 'ext.hoverLanguages', getConfig("hover.languages",["markdown"]));
-	registerHovers(context, getConfig("hover.languages"));
+	// registerHovers(context, getConfig("hover.languages"));
 	registerDecorationHover(context, getConfig("hover.languages"));
 	registerCodeActionCommand(context);
 	registerCodeActionsProvider(context);
